@@ -1,0 +1,7 @@
+h1.title {
+	padding-top:80px;
+	background-image:url(../img/tiny-logo.png);
+	background-repeat:no-repeat;
+	background-size:10%;
+	background-position-y:20px;
+}
