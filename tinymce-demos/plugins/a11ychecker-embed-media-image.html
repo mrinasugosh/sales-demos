@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>TinyMCE Accessibility Checker Demo</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-GLhlTQ8iRABdZLl6O3oVMWSktQOp6b7In1Zl3/Jr59b6EGGoI1aFkw7cmDA6j6gD" crossorigin="anonymous">
+  <link href="../css/style.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js" integrity="sha384-w76AqPfDkMBDXo30jS1Sgez6pr3x5MlQ1ZAGC+nuZB+EYdgRZgiwxhTBTkF7CXvN" crossorigin="anonymous"></script>
+  <script src="https://cdn.tiny.cloud/1/lw2snvww4ggtq3zyd4w5wjy0pu12gtzkbwjgydm1hdagxpp8/tinymce/6-dev/tinymce.min.js" referrerpolicy="origin"></script>
+
+  <script>
+    // TinyMCE CMS Starter Config
+    // Quick start video - https://www.youtube.com/watch?v=cbkrZMbVF60
+
+    // Initialize TinyMCE
+    tinymce.init({
+      // Select the element(s) to add TinyMCE to using any valid CSS selector
+      selector: '#editor',
+
+      // Tip - To keep TinyMCE lean, only include the plugins you need.
+      plugins: 'a11ychecker advcode advlist advtable anchor autocorrect editimage image link linkchecker lists media mediaembed pageembed powerpaste searchreplace table template tinymcespellchecker typography visualblocks wordcount',
+      
+      // Configure the toolbar so it fits your app. There are many
+      // different configuration options available:
+      // https://www.tiny.cloud/docs/tinymce/6/toolbar-configuration-options/
+      toolbar: 'undo redo | styles | bold italic strikethrough forecolor | align | table link image media pageembed | bullist numlist outdent indent | spellcheckdialog a11ycheck | typography code',
+
+      // Specify the height of the editor, including toolbars and the statusbar.
+      // https://www.tiny.cloud/docs/tinymce/6/customize-ui/#changing-editor-height-and-width
+      height: 540,
+
+      // The Accessibility Checker plugin offers extensive controls over which
+      // level of compliance to test against and which rules to enforce.
+      // https://www.tiny.cloud/docs/tinymce/6/a11ychecker/
+      a11ychecker_level: 'aaa',
+
+      // Advanced Typography allows users to apply 25+ typographic conventions to their content.
+      // Specify the language(s) you want the plugin to use. In this case we are just allowing
+      // English, but an array of languages can also be specified.
+      // https://www.tiny.cloud/docs/tinymce/6/advanced-typography/
+      typography_langs: [ 'en-US' ],
+      typography_default_lang: 'en-US',
+
+      // Advanced Code Editor lets power users edit the editor's underlying HTML in real time,
+      // with indents and color coding. Enable inline view for a more seamless code editing
+      // experience.
+      // https://www.tiny.cloud/docs/tinymce/6/advcode/
+      advcode_inline: true,
+
+
+      // TinyMCE offers a wide range of options to control what classes, styles
+      // and attributes are allowed in the content. All other classes will be
+      // filtered out.
+      // https://www.tiny.cloud/docs/tinymce/6/content-filtering/#valid_classes
+      valid_classes: {
+        'img': 'medium',
+        'div': 'related-content'
+      },
+
+      // Enable image fig captions
+      // https://www.tiny.cloud/docs/tinymce/6/image/#image_caption
+      image_caption: true,
+
+      // Prevent editing of the related content block by making the whole
+      // block noneditable.
+      // https://www.tiny.cloud/docs/tinymce/6/content-behavior-options/#noneditable_class
+      noneditable_class: 'related-content',
+
+      // Templates is useful for when users need to insert repeatable content,
+      // for example a related content block.
+      // https://www.tiny.cloud/docs/tinymce/6/template/
+      templates: [
+        {
+          title: 'Related content',
+          description: 'This template inserts a related content block',
+          content: '<div class="related-content"><h3>Related content</h3><p><strong>{$rel_lede}</strong> {$rel_body}</p></div>'
+        }
+      ],
+
+      // This option makes it easy to inject dynamic content into the template.
+      template_replace_values: {
+        rel_lede: 'Lorem ipsum',
+        rel_body: 'dolor sit amet...',
+      },
+
+      // Specifies the dynamic content inside the insert template dialog preview
+      template_preview_replace_values: {
+        rel_lede: 'Lorem ipsum',
+        rel_body: 'dolor sit amet...',
+      },
+
+      // The following css will be injected into the editor, extending
+      // the default styles.
+      // In a real world scenario, it's recommended to use the content_css
+      // option to load a separate CSS file. This makes editing easier too.
+      // https://www.tiny.cloud/docs/tinymce/6/add-css-options/
+      content_style: `
+        body {
+          font-family: 'Roboto', sans-serif;
+          color: #222;
+        }
+        img {
+          height: auto;
+          margin: auto;
+          padding: 10px;
+          display: block;
+        }
+        img.medium {
+          max-width: 25%;
+        }
+        .related-content {
+          padding:0 10px;
+          margin: 0 0 15px 15px;
+          background:#eee;
+          width:200px;
+          float:right;
+        }
+
+         .ephox-summary-card {
+          border: 1px solid #AAA;
+          box-shadow: 0 2px 2px 0 rgba(0,0,0,.14), 0 3px 1px -2px rgba(0,0,0,.2), 0 1px 5px 0 rgba(0,0,0,.12);
+          padding: 10px;
+          overflow: hidden;
+          margin-bottom: 1em;
+        }
+
+        .ephox-summary-card a {
+          text-decoration: none;
+          color: inherit;
+        }
+
+        .ephox-summary-card a:visited {
+          color: inherit;
+        }
+
+        .ephox-summary-card-title {
+          font-size: 1.2em;
+          display: block;
+        }
+
+        .ephox-summary-card-author {
+          color: #999;
+          display: block;
+          margin-top: 0.5em;
+        }
+
+        .ephox-summary-card-website {
+          color: #999;
+          display: block;
+          margin-top: 0.5em;
+        }
+
+        .ephox-summary-card-thumbnail {
+          max-width: 180px;
+          max-height: 180px;
+          margin-left: 2em;
+          float: right;
+        }
+
+        .ephox-summary-card-description {
+          margin-top: 0.5em;
+          display: block;
+        }
+      `
+
+      // Next step: Check out Tiny Drive for easy cloud storage of your users'
+      // images and media. Integrates seamlessly with TinyMCE.
+      // https://www.tiny.cloud/drive/
+    });
+  </script>
+
+  </script>
+  <style>
+  </style>
+</head>
+<body>
+<div class="container-lg">
+  <div class="row">
+    <div class="col">
+      <h1 class="title">Accessibility Checker, Enhanced Media Embed & Image Editing</h1><br>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col col-xl-10">
+    <textarea id="editor">
+      <h1>Top Things to See in Norway</h1>
+<p><img style="float: right;" src="https://images.pexels.com/photos/1559825/pexels-photo-1559825.jpeg?auto=compress&amp;cs=tinysrgb&amp;dpr=2&amp;h=750&amp;w=1260" width="300" height="375"></p>
+<p>Norway is a beautiful and unique country filled with stunning landscapes, majestic fjords, and unique culture. From the <span style="color: rgb(45, 194, 107);"><a style="color: rgb(45, 194, 107);" href="https://en.wikipedia.org/wiki/Aurora">iconic Northern Lights</a></span> to the majestic views of the Norwegian fjords, there are so many incredible things to see and do in Norway. Here is a comprehensive list of the top things to see in Norway.</p>
+<h2>Itinerary</h2>
+<table>
+<thead>
+<tr>
+<th>Day</th>
+<th>Destination</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Day 1</td>
+<td>Oslo</td>
+</tr>
+<tr>
+<td>Day 2</td>
+<td>Bergen</td>
+</tr>
+<tr>
+<td>Day 3</td>
+<td>Flam Railway</td>
+</tr>
+<tr>
+<td>Day 4</td>
+<td>Geirangerfjord</td>
+</tr>
+</tbody>
+</table>
+<h2>Day 1: Oslo</h2>
+<p>Oslo is the capital of Norway and the country&rsquo;s largest city. It is home to some of the most iconic attractions in Norway, such as the iconic Akershus Fortress, the Vigeland Sculpture Park, and the world-famous Holmenkollen Ski Jump. Other attractions in Oslo include the Nobel Peace Prize Museum, the Viking Ship Museum, and the world-famous Opera House.</p>
+<h2>Day 2: Bergen</h2>
+<p>Bergen is the second largest city in Norway and is located on the west coast of the country. Bergen is known for its beautiful scenery and stunning views of the fjords. Popular attractions in Bergen include the Bryggen Wharf, the Bergen Aquarium, the Hanseatic Museum, and the Fl&oslash;ibanen Funicular.</p>
+<h2>Day 3: Flam Railway</h2>
+<p>The Flam Railway is one of the most popular tourist attractions in Norway. The railway winds its way through the stunning landscapes of the Aurlandsfjord and the N&aelig;r&oslash;yfjord. The journey takes approximately 1.5 hours and offers stunning views of the surrounding fjords and mountains.</p>
+<h2>Day 4: Geirangerfjord</h2>
+<p>The Geirangerfjord is one of Norway&rsquo;s most spectacular fjords and is located in the western part of the country. The fjord is famous for its stunning views of the surrounding mountains and its waterfalls, which are some of the most photographed in the world.</p>
+<h2>Conclusion</h2>
+<p>Norway is an incredible country filled with stunning landscapes, majestic fjords, and unique culture. From the iconic Northern Lights to the majestic views of the Norwegian fjords, there are so many incredible things to see and do in Norway. This list of the top things to see in Norway provides a comprehensive guide to the must-see attractions in the country.</p>
+    </textarea><br>
+    <p>Sample embed links (Enhanced Media Embed):</p>
+    <ul>
+      <li>https://www.youtube.com/watch?v=Pf3Ek6yG9Pc</li>
+      <li>https://open.spotify.com/track/6SPocux2pBpFp3lshAOek1</li>
+    </ul>
+  </div>
+</div>
+</body>
+</html>
