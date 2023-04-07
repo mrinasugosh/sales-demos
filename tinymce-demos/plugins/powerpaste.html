@@ -11,14 +11,15 @@
   <script>
 
     let commonConfig = {
-      toolbar: 'fontfamily fontsizeinput | bold italic underline | link image | code |  media table | spellcheckdialog a11ycheck | align lineheight | checklist numlist bullist indent outdent | emoticons charmap | removeformat',
+      toolbar: 'fontfamily fontsizeinput | bold italic underline | link image | code |  media table | align lineheight | checklist numlist bullist indent outdent | emoticons charmap | removeformat',
       advcode_inline: true,
       height:560,
     }
 
     tinymce.init({
       selector: '#no-powerpaste',
-      plugins: 'anchor advcode autolink charmap codesample emoticons image link lists media searchreplace table visualblocks wordcount checklist mediaembed casechange export formatpainter pageembed linkchecker a11ychecker tinymcespellchecker permanentpen  advtable advcode editimage tableofcontents footnotes mergetags autocorrect typography',
+      plugins: 'anchor advcode autolink charmap codesample emoticons image link lists media searchreplace table visualblocks wordcount checklist mediaembed casechange export formatpainter pageembed linkchecker permanentpen  advtable advcode editimage tableofcontents footnotes mergetags autocorrect typography',
+
       ...commonConfig,
     });
 
