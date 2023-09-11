@@ -1,0 +1,365 @@
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>AI Assistant Demo</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-GLhlTQ8iRABdZLl6O3oVMWSktQOp6b7In1Zl3/Jr59b6EGGoI1aFkw7cmDA6j6gD" crossorigin="anonymous">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js" integrity="sha384-w76AqPfDkMBDXo30jS1Sgez6pr3x5MlQ1ZAGC+nuZB+EYdgRZgiwxhTBTkF7CXvN" crossorigin="anonymous"></script>
+    <script src="https://cdn.tiny.cloud/1/qagffr3pkuv17a8on1afax661irst1hbr4e6tbv888sz91jc/tinymce/6-stable/tinymce.min.js" referrerpolicy="origin"></script>
+    <script type="module">
+const endpointList = [
+    {
+      text: 'Tiny OpenAI Proxy',
+      value: 'https://openai.ai-demo-proxy.iad.tiny.cloud/',
+      keyurl: 'https://ai-demo-proxy.iad.tiny.cloud/'
+    },
+    {
+      text: 'OpenAI',
+      value: 'https://api.openai.com/',
+      keyurl: 'https://platform.openai.com/account/api-keys'
+    },
+    {
+      text: 'Custom',
+      value: 'custom'
+    },
+    {
+      text: 'Tiny OpenAI Proxy (staging)',
+      value: 'https://openai.ai-demo-proxy.iad.staging.tiny.cloud/',
+      keyurl: 'https://ai-demo-proxy.iad.staging.tiny.cloud/'
+    },
+  ];
+  
+  const parameters = document.location.hash?.split('&');
+  let aiPluginToken = '';
+  let aiPluginEndpoint = endpointList[0].value; // default if nothing saved
+  for (let i = 0; i < parameters.length; i++) {
+    const parameter = parameters[i];
+    if (parameter.indexOf('token') > -1) {
+      aiPluginToken = parameter.split('=')[1];
+    } else if (parameter.indexOf('endpoint') > -1) {
+      // Expect url-base64-encoded
+      aiPluginEndpoint = atob(parameter.split('=')[1]);
+    }
+  }
+
+tinymce.init({
+  selector: 'textarea.tinymce',
+  menu: {
+    demo: { title: 'Demo', items: 'resetToken' }
+  },
+  plugins: "ai advlist anchor autolink charmap code emoticons fullscreen help image link lists media preview searchreplace table",
+  toolbar: "undo redo | aidialog aishortcuts | styles fontsizeinput | bold italic | align bullist numlist | table link image | code ",
+  height: 600,
+  menubar: 'file edit view insert format tools table help demo',
+  setup: (editor) => {
+    const onEvent = (name) => editor.on(name, (e) => console.log(name, e));
+    onEvent('AIRequest');
+    onEvent('AIResponse');
+    onEvent('AIError');
+    // open a dialog for token and endpoint url
+
+    const openDialog = (initialData) => {
+      const api = editor.windowManager.open({
+        title: 'Token Configuration',
+        size: 'medium',
+        body: {
+          type: 'panel',
+          items: [
+            {
+              type: 'bar',
+              items: [
+                {
+                  type: 'input',
+                  name: 'endpoint',
+                  label: 'Endpoint',
+                  maximized: true,
+                },
+            {
+              name: 'selection',
+              type: 'selectbox',
+              label: 'Endpoints',
+              items: endpointList,
+            },
+              ]
+            },
+            {
+              type: 'bar',
+              items: [
+            {
+              type: 'input',
+              name: 'token',
+                  label: 'Token',
+                  maximized: true
+                },
+                {
+                  type: 'label',
+                  name: 'foo',
+                  label: '\u00A0',
+                  items: [
+                    {
+                      type: 'button',
+                      name: 'get-key',
+                      text: 'Get token'
+                    },
+                  ]
+            },
+          ]
+        },
+        {
+          type: 'htmlpanel',
+          html: '<h3 style="font-size: 1.1em; font-weight: 500; margin-top: 1em;">Use the demo menu to show this dialog again if the token expires'
+        },
+          ]
+        },
+        initialData,
+        buttons: [{
+          text: 'Save',
+          type: 'submit',
+          primary: true
+        }],
+        onAction: (api, details) => {
+          if (details.name === 'get-key') {
+            const { selection, endpoint: endpointValue } = api.getData();
+            if (selection === "custom") {
+              alert("No token URL available for custom endpoints")
+            } else {
+              const endpoint = endpointList.find((ed) => ed.value === endpointValue);
+              if (endpoint) {
+                window.open(endpoint.keyurl, '_blank');
+              }
+            }
+          }
+        },
+        onSubmit: (api) => {
+          const { token, endpoint } = api.getData();
+          document.location.hash = `#token=${token}&endpoint=${btoa(endpoint)}`;
+          aiPluginToken = token;
+          aiPluginEndpoint = endpoint
+          api.close();
+        },
+        onChange: (api, details) => {
+          if (details.name === 'selection') {
+            const { selection } = api.getData();
+            api.setData({
+              endpoint: selection,
+              token: ''
+            });
+          } else if (details.name === 'endpoint') {
+            const endpointValue = api.getData().endpoint;
+            const endpoint = endpointList.find((ed) => ed.value === endpointValue);
+            api.setData({ selection: !endpoint ? 'custom' : endpoint.value });
+          }
+        }
+      });
+      api.focus('token');
+    };
+
+    const readDataAndOpenDialog = () => {
+      let initialData = {
+          token: aiPluginToken || '',
+          endpoint: aiPluginEndpoint || ''
+      };
+
+      if (aiPluginEndpoint) {
+          const predefinedEndpoint = endpointList.find((ed) => ed.value === aiPluginEndpoint);
+          initialData.selection = predefinedEndpoint ? aiPluginEndpoint : 'custom';
+        }
+        openDialog(initialData);
+    }
+
+    editor.on('init', () => {
+      // Only open the dialog if either token or endpoint is not provided in the URL
+      const shouldOpenDialog = !aiPluginToken || !aiPluginEndpoint;
+
+      if (shouldOpenDialog) {
+        readDataAndOpenDialog();
+      };
+    });
+
+    editor.ui.registry.addMenuItem('resetToken', {
+        text: 'Reset Token',
+        onAction: () => {
+          readDataAndOpenDialog();
+        }
+    });
+  },
+  ai_request: (request, respondWith) => {
+    if (!document.querySelector("#streaming").checked) {
+      respondWith.string((signal) => stringRequestToChatGPT(request.prompt, signal).then((data) => data?.choices[0]?.message?.content?.trim()));
+    } else {
+      respondWith.stream((signal, streamMessage) => streamRequestToChatGPT(request.prompt, signal, streamMessage));
+    }
+  }
+});
+
+/* Common ChatGPT settings regardless of response type */
+
+const apiUrl = () => {
+  if (aiPluginEndpoint && aiPluginEndpoint.length > 0) {
+    const withTrailingSlash = aiPluginEndpoint.endsWith('/') ? aiPluginEndpoint : aiPluginEndpoint + '/';
+    return withTrailingSlash + 'v1/chat/completions'
+  }
+};
+
+const optionsForChatGPT = (content, signal, stream) => ({
+  signal,
+  method: 'POST',
+  headers: { 
+    'Content-Type': 'application/json', 
+    'Authorization': `Bearer ${aiPluginToken}` 
+  },
+  body: JSON.stringify({
+    model: document.querySelector('#model').value || 'gpt-3.5-turbo',
+    temperature: 0.7,
+    max_tokens: 800,
+    messages: [{ role: 'user', content }],
+    stream
+  })
+});
+
+/** Using a proxy to talk to ChatGPT, with a simple request/response system. No streaming. */
+const stringRequestToChatGPT = (content, signal) => {
+  return window.fetch(apiUrl(), optionsForChatGPT(content, signal, false))
+    .then((response) => {
+      if (response.ok) {
+        return response.json();
+       } else {
+        return response.text().then(text => Promise.reject("Failed to communicate with the ChatGPT API" + (text.length === 0 ? "." : `: ${text}`)));
+      }
+    }).then((data) => 
+      data.error ? Promise.reject(`Failed to communicate with the ChatGPT API because of ${data.error.type} error: ${data.error.message}`) : data
+    );
+}
+
+/********************************************************************
+ * Everything below is only required for streaming responses.
+ * 
+ * Yes, it's complicated, but we want to leave control in the hands
+ * of the integrator for this first release.
+ *******************************************************************/
+const fetchApi = import("https://unpkg.com/@microsoft/fetch-event-source@2.0.1/lib/esm/index.js").then(module => module.fetchEventSource);
+
+const streamRequestToChatGPT = (content, signal, streamMessage) => {
+  // Use microsoft's fetch-event-source library to work around the 2000 character limit
+  // of the browser `EventSource` API, which requires query strings
+  return fetchApi.then(fetchEventSource =>
+    fetchEventSource(
+      apiUrl(),
+      {
+        ...optionsForChatGPT(content, signal, true),
+        openWhenHidden: true,
+        onopen: async (response) => {
+          const contentType = response.headers.get('content-type');
+          if (response.ok && contentType?.includes('text/event-stream')) {
+            return; // everything's good
+          } else if (contentType?.includes('application/json')) {
+            // openai returns json on error, instead of an event stream
+            const data = await response.json();
+            throw new Error(`Failed to communicate with the ChatGPT API because of ${data.error.type} error: ${data.error.message}`);
+          } else {
+            // generic plain text error
+            throw new Error(`Failed to communicate with the ChatGPT API. ${await response.text()}`);
+          }
+        },
+        onmessage: (ev) => {
+          const data = ev.data;
+          if (data !== '[DONE]') {
+            const parsedData = JSON.parse(data);
+            const firstChoice = parsedData?.choices[0];
+            const message = firstChoice?.delta?.content;
+            if (message) {
+              streamMessage(message);
+            }
+          }
+        },
+        onerror: (error) => {
+          // Stop operation and do not retry by the fetch-event-source
+          throw error;
+        }
+      }
+    )
+  )
+}
+    </script>
+
+    <style type="text/css">
+      h1.title { margin-top:15px; }
+      p.choose-model { margin-top: 15px; }
+    </style>
+
+    <script>
+	(function(apiKey){
+	    (function(p,e,n,d,o){var v,w,x,y,z;o=p[d]=p[d]||{};o._q=o._q||[];
+	    v=['initialize','identify','updateOptions','pageLoad','track'];for(w=0,x=v.length;w<x;++w)(function(m){
+	        o[m]=o[m]||function(){o._q[m===v[0]?'unshift':'push']([m].concat([].slice.call(arguments,0)));};})(v[w]);
+	        y=e.createElement(n);y.async=!0;y.src='https://cdn.pendo.io/agent/static/'+apiKey+'/pendo.js';
+	        z=e.getElementsByTagName(n)[0];z.parentNode.insertBefore(y,z);})(window,document,'script','pendo');
+	})('010e65dc-ce76-4697-47d6-67e316112fec');
+
+
+    // This function creates anonymous visitor IDs in Pendo unless you change the visitor id field to use your app's values
+	// This function uses the placeholder 'ACCOUNT-UNIQUE-ID' value for account ID unless you change the account id field to use your app's values
+	// Call this function in your authentication promise handler or callback when your visitor and account id values are available
+	// Please use Strings, Numbers, or Bools for value types.
+    pendo.initialize({
+        visitor: {
+            id:              'web-visitor'   // Required if user is logged in, default creates anonymous ID
+            // email:        // Recommended if using Pendo Feedback, or NPS Email
+            // full_name:    // Recommended if using Pendo Feedback
+            // role:         // Optional
+
+            // You can add any additional visitor level key-values here,
+            // as long as it's not one of the above reserved names.
+        },
+
+        account: {
+            id:           'website' // Required if using Pendo Feedback, default uses the value 'ACCOUNT-UNIQUE-ID'
+            // name:         // Optional
+            // is_paying:    // Recommended if using Pendo Feedback
+            // monthly_value:// Recommended if using Pendo Feedback
+            // planLevel:    // Optional
+            // planPrice:    // Optional
+            // creationDate: // Optional
+
+            // You can add any additional account level key-values here,
+            // as long as it's not one of the above reserved names.
+        }
+    });
+
+	</script>
+  </head>
+  <body>
+  
+    <div class="container-lg">
+      <div class="row">
+        <div class="col">
+          <h1 class="title">TinyMCE AI Assistant Demo</h1>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col">
+          <p style="display: none"><label><input checked type="checkbox" id="streaming" /> Stream response</label></p>
+          <div id="ephox-ui">
+            <textarea cols="30" rows="50" class="tinymce">
+            </textarea>
+          </div>
+        </div>
+      </div>
+      <div style="display: none" class="row">
+        <div class="col">
+          <p class="choose-model"><label>
+              Choose the model to use:
+              <select id="model">
+                <option selected value="gpt-3.5-turbo">GPT 3.5 Turbo</option>
+                <option value="gpt-4">GPT 4</option>
+              </select>
+            </label></p>
+        </div>
+      </div>
+    </div>
+
+  </body>
+</html>  
